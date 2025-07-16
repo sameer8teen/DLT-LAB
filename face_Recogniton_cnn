@@ -1,1 +1,55 @@
+import cv2
+import numpy as np
+import os
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+
+# Print current working directory for confirmation
+print("Current working dir:", os.getcwd())
+
+# Function to load and preprocess an image
+def load_image(path, label, size=(100, 100)):
+    img = cv2.imread(path)
+    if img is None:
+        raise FileNotFoundError(f"Could not find image: {path}")
+    img = cv2.resize(img, size)
+    img = img.astype('float32') / 255.0
+    return img, label
+
+# Absolute paths to the cat and dog images
+cat_path = r"C:\Users\RIT-A104-039\Desktop\face_recognition_project\dataset\cat\cat1.jpg"
+dog_path = r"C:\Users\RIT-A104-039\Desktop\face_recognition_project\dataset\cat\dog\dog1.jpg"
+
+# Load images with one-hot encoded labels
+cat_img, cat_label = load_image(cat_path, [1, 0])  # Cat = [1, 0]
+dog_img, dog_label = load_image(dog_path, [0, 1])  # Dog = [0, 1]
+
+# Prepare dataset
+X = np.array([cat_img, dog_img])
+y = np.array([cat_label, dog_label])
+
+# Build a simple CNN model
+model = Sequential([
+    Conv2D(16, (3, 3), activation='relu', input_shape=(100, 100, 3)),
+    MaxPooling2D(2, 2),
+    Flatten(),
+    Dense(32, activation='relu'),
+    Dense(2, activation='softmax')  # Output layer for 2 classes
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+model.fit(X, y, epochs=10)
+
+# Predict using the trained model
+predictions = model.predict(X)
+labels = ['Cat', 'Dog']
+
+# Display the predictions
+for i, prediction in enumerate(predictions):
+    class_index = np.argmax(prediction)
+    confidence = np.max(prediction)
+    print(f"Image {i+1} prediction: {labels[class_index]} with confidence {confidence:.2f}")
 
